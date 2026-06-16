@@ -66,7 +66,7 @@ Prediction: Safe (0) or Phishing (1)
 ### Installation
 
 ```bash
-pip install scikit-learn pandas numpy matplotlib seaborn
+pip install -r requirements.txt
 ```
 
 ### Running the Model
