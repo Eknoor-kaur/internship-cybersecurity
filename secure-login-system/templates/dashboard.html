@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Secure Login System{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #f5f5f5;
+    }
+    
+    .header {
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .header h1 {
+        margin: 0;
+    }
+    
+    .logout-btn {
+        padding: 10px 20px;
+        background: #ff6b6b;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .logout-btn:hover {
+        background: #ff5252;
+    }
+    
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .nav-tabs {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        display: flex;
+    }
+    
+    .nav-tab {
+        padding: 15px 20px;
+        background: white;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #666;
+        font-weight: 600;
+        cursor: pointer;
+        flex: 1;
+        transition: all 0.3s;
+    }
+    
+    .nav-tab.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+    }
+    
+    .nav-tab:hover {
+        background: #f5f5f5;
+    }
+    
+    .tab-content {
+        display: none;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .info-group {
+        margin-bottom: 25px;
+    }
+    
+    .info-row {
+        padding: 15px 0;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: #666;
+        font-weight: 500;
+    }
+    
+    .info-value {
+        color: #333;
+        font-weight: 600;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .badge-enabled {
+        background: #d3f9d8;
+        color: #2b8a3e;
+    }
+    
+    .badge-disabled {
+        background: #ffe0e0;
+        color: #c92a2a;
+    }
+    
+    .session-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 10px;
+        background: #f9f9f9;
+    }
+    
+    .session-item.current {
+        border-left: 4px solid #51cf66;
+        background: #f0fdf4;
+    }
+    
+    .setup-2fa-box {
+        background: #eff6ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 5px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .setup-2fa-box h3 {
+        color: #1971c2;
+        margin-bottom: 10px;
+    }
+    
+    .setup-2fa-box p {
+        color: #1971c2;
+        margin-bottom: 15px;
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .button-secondary {
+        padding: 10px 20px;
+        background: #e0e0e0;
+        color: #333;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .button-secondary:hover {
+        background: #d0d0d0;
+    }
+    
+    .code-block {
+        background: #f5f5f5;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        padding: 15px;
+        font-family: monospace;
+        margin: 10px 0;
+        word-break: break-all;
+    }
+    
+    .qr-code {
+        text-align: center;
+        margin: 20px 0;
+    }
+    
+    .qr-code img {
+        max-width: 200px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div>
+        <h1>👋 Welcome, {{ user.username }}!</h1>
+        <p style="color: #666; margin: 5px 0 0 0;">{{ user.email }}</p>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+    <div class="nav-tabs">
+        <button type="button" class="nav-tab active" onclick="switchTab('profile')">Profile</button>
+        <button type="button" class="nav-tab" onclick="switchTab('security')">Security</button>
+        <button type="button" class="nav-tab" onclick="switchTab('2fa')">2FA Settings</button>
+        <button type="button" class="nav-tab" onclick="switchTab('sessions')">Sessions</button>
+    </div>
+    
+    <!-- Profile Tab -->
+    <div id="profile" class="tab-content active">
+        <h2>Profile Information</h2>
+        <div class="info-group">
+            <div class="info-row">
+                <span class="info-label">Username</span>
+                <span class="info-value">{{ user.username }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ user.email }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Member Since</span>
+                <span class="info-value">{{ user.created_at.strftime('%B %d, %Y') }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Last Login</span>
+                <span class="info-value">
+                    {% if user.last_login %}
+                        {{ user.last_login.strftime('%B %d, %Y at %I:%M %p') }}
+                    {% else %}
+                        Never
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Security Tab -->
+    <div id="security" class="tab-content">
+        <h2>Security Settings</h2>
+        <div class="info-group">
+            <h3>Change Password</h3>
+            <form id="changePasswordForm">
+                <div class="form-group">
+                    <label for="old_password">Current Password</label>
+                    <input type="password" id="old_password" required placeholder="Enter your current password">
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" id="new_password" required placeholder="Enter your new password">
+                </div>
+                <div class="form-group">
+                    <label for="new_password_confirm">Confirm New Password</label>
+                    <input type="password" id="new_password_confirm" required placeholder="Confirm your new password">
+                </div>
+                <button type="submit" style="width: 100%;">Change Password</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 2FA Tab -->
+    <div id="2fa" class="tab-content">
+        <h2>Two-Factor Authentication</h2>
+        <div class="info-group" id="2faStatus">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Sessions Tab -->
+    <div id="sessions" class="tab-content">
+        <h2>Active Sessions</h2>
+        <div id="sessionsList">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        
+        // Remove active class from all buttons
+        document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+        
+        // Show selected tab
+        document.getElementById(tab).classList.add('active');
+        
+        // Add active class to button
+        event.target.classList.add('active');
+        
+        // Load content if needed
+        if (tab === '2fa') {
+            load2FAStatus();
+        } else if (tab === 'sessions') {
+            loadSessions();
+        }
+    }
+    
+    function load2FAStatus() {
+        const status2fa = {{ 'true' if user.totp_enabled else 'false' }};
+        const html = status2fa ? 
+            `
+            <div class="info-row">
+                <span class="info-label">2FA Status</span>
+                <span><span class="badge badge-enabled">Enabled</span></span>
+            </div>
+            <button type="button" class="button-secondary" style="margin-top: 15px;" onclick="disable2FA()">Disable 2FA</button>
+            ` :
+            `
+            <div class="setup-2fa-box">
+                <h3>Enable Two-Factor Authentication</h3>
+                <p>Secure your account with an additional layer of protection</p>
+                <button type="button" onclick="setup2FA()" style="width: 100%; padding: 12px;">Setup 2FA</button>
+            </div>
+            `;
+        
+        document.getElementById('2faStatus').innerHTML = html;
+    }
+    
+    function loadSessions() {
+        fetch('{{ url_for("get_sessions") }}')
+            .then(r => r.json())
+            .then(sessions => {
+                let html = '';
+                if (sessions.length === 0) {
+                    html = '<p style="color: #666;">No active sessions</p>';
+                } else {
+                    sessions.forEach(session => {
+                        const date = new Date(session.created_at);
+                        html += `
+                            <div class="session-item ${session.current ? 'current' : ''}">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>
+                                        <strong>${session.ip_address}</strong>
+                                        ${session.current ? '<span class="badge badge-enabled" style="margin-left: 10px;">Current</span>' : ''}
+                                    </div>
+                                    <small style="color: #666;">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</small>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                document.getElementById('sessionsList').innerHTML = html;
+            });
+    }
+    
+    async function setup2FA() {
+        const response = await fetch('{{ url_for("setup_2fa") }}', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            let backupCodesHtml = data.backup_codes.map(code => 
+                `<span class="code-block">${code}</span>`
+            ).join('');
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div class="card" style="width: 90%; max-width: 500px;">
+                    <h2>Setup Two-Factor Authentication</h2>
+                    
+                    <h3 style="margin-top: 20px;">Step 1: Scan QR Code</h3>
+                    <p style="color: #666; margin-bottom: 15px;">Use an authenticator app (Google Authenticator, Authy, Microsoft Authenticator, etc.)</p>
+                    <div class="qr-code">
+                        <img src="${data.qr_code}" alt="QR Code">
+                    </div>
+                    
+                    <h3 style="margin-top: 20px;">Step 2: Verify Token</h3>
+                    <div class="form-group">
+                        <label for="verify_token">Enter the 6-digit code from your authenticator:</label>
+                        <input type="text" id="verify_token" maxlength="6" pattern="\\d{6}" placeholder="000000" style="font-size: 20px; letter-spacing: 5px; text-align: center;">
+                    </div>
+                    
+                    <h3 style="margin-top: 20px;">Step 3: Save Backup Codes</h3>
+                    <p style="color: #666; margin-bottom: 10px;">Save these codes in a safe place. You can use them to recover your account:</p>
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 150px; overflow-y: auto;">
+                        ${backupCodesHtml}
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="flex: 1; background: #e0e0e0; color: #333;">Cancel</button>
+                        <button onclick="confirm2FA()" style="flex: 1;">Enable 2FA</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+    }
+    
+    async function confirm2FA() {
+        const token = document.getElementById('verify_token').value;
+        
+        if (!token || token.length !== 6) {
+            showAlert('Please enter a valid 6-digit code', 'error');
+            return;
+        }
+        
+        const response = await fetch('{{ url_for("enable_2fa") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.querySelector('.card').parentElement.remove();
+            showAlert('2FA enabled successfully!', 'success');
+            load2FAStatus();
+        } else {
+            showAlert(data.error || 'Failed to enable 2FA', 'error');
+        }
+    }
+    
+    async function disable2FA() {
+        const password = prompt('Enter your password to disable 2FA:');
+        if (!password) return;
+        
+        const response = await fetch('{{ url_for("disable_2fa") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('2FA disabled successfully', 'success');
+            load2FAStatus();
+        } else {
+            showAlert(data.error || 'Failed to disable 2FA', 'error');
+        }
+    }
+    
+    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const old_password = document.getElementById('old_password').value;
+        const new_password = document.getElementById('new_password').value;
+        const new_password_confirm = document.getElementById('new_password_confirm').value;
+        
+        const response = await fetch('{{ url_for("change_password") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ old_password, new_password, new_password_confirm })
+        });
+        
+        await handleResponse(response);
+    });
+    
+    async function logout() {
+        const response = await fetch('{{ url_for("logout") }}', { method: 'POST' });
+        await handleResponse(response);
+    }
+    
+    // Auto-format token input
+    document.addEventListener('input', (e) => {
+        if (e.target.id === 'verify_token') {
+            e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 6);
+        }
+    });
+</script>
+{% endblock %}
