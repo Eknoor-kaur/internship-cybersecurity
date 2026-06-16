@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Verify 2FA - Secure Login System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        padding: 10px;
+        background: #f5f5f5;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 500;
+        color: #666;
+        transition: all 0.3s;
+    }
+    
+    .tab-btn.active {
+        background: #667eea;
+        color: white;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .totp-input {
+        text-align: center;
+        letter-spacing: 10px;
+        font-size: 24px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h1>🔐 Two-Factor Authentication</h1>
+        <p class="subtitle">Verify your identity using 2FA</p>
+        
+        <div class="tabs">
+            <button type="button" class="tab-btn active" onclick="switchTab('totp')">Authenticator</button>
+            <button type="button" class="tab-btn" onclick="switchTab('backup')">Backup Code</button>
+        </div>
+        
+        <div id="totp" class="tab-content active">
+            <form id="totpForm">
+                <div class="form-group">
+                    <label for="totp">6-Digit Code</label>
+                    <input type="text" id="totp" name="totp" required 
+                           placeholder="000000" maxlength="6" 
+                           pattern="\d{6}" class="totp-input">
+                </div>
+                <button type="submit" id="totpBtn">Verify</button>
+            </form>
+        </div>
+        
+        <div id="backup" class="tab-content">
+            <form id="backupForm">
+                <div class="form-group">
+                    <label for="backup_code">Backup Code</label>
+                    <input type="text" id="backup_code" name="backup_code" required 
+                           placeholder="XXXXXXXX" maxlength="8">
+                </div>
+                <button type="submit" id="backupBtn">Verify</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        // Hide all tabs
+        document.getElementById('totp').classList.remove('active');
+        document.getElementById('backup').classList.remove('active');
+        
+        // Remove active class from all buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // Show selected tab
+        document.getElementById(tab).classList.add('active');
+        
+        // Add active class to button
+        event.target.classList.add('active');
+    }
+    
+    // Auto-format TOTP input
+    document.getElementById('totp').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^\d]/g, '').slice(0, 6);
+    });
+    
+    // Handle TOTP form submission
+    document.getElementById('totpForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const token = document.getElementById('totp').value;
+        const button = document.getElementById('totpBtn');
+        
+        button.dataset.originalText = button.textContent;
+        setLoading(true, button);
+        
+        try {
+            const response = await fetch('{{ url_for("verify_2fa") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token })
+            });
+            
+            await handleResponse(response);
+        } catch (error) {
+            showAlert('An error occurred: ' + error.message, 'error');
+            setLoading(false, button);
+        }
+    });
+    
+    // Handle backup code form submission
+    document.getElementById('backupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const token = document.getElementById('backup_code').value;
+        const button = document.getElementById('backupBtn');
+        
+        button.dataset.originalText = button.textContent;
+        setLoading(true, button);
+        
+        try {
+            const response = await fetch('{{ url_for("verify_2fa") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token })
+            });
+            
+            await handleResponse(response);
+        } catch (error) {
+            showAlert('An error occurred: ' + error.message, 'error');
+            setLoading(false, button);
+        }
+    });
+</script>
+{% endblock %}

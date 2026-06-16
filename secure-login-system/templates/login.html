@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Secure Login System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h1>🔐 Login</h1>
+        <p class="subtitle">Enter your credentials to access your account</p>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Enter your username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password">
+            </div>
+            
+            <button type="submit" id="loginBtn">Login</button>
+            
+            <p class="link">
+                Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
+            </p>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const button = document.getElementById('loginBtn');
+        
+        button.dataset.originalText = button.textContent;
+        setLoading(true, button);
+        
+        try {
+            const response = await fetch('{{ url_for("login") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            });
+            
+            await handleResponse(response, (data) => {
+                if (data.requires_2fa) {
+                    showAlert(data.message, 'info');
+                }
+            });
+        } catch (error) {
+            showAlert('An error occurred: ' + error.message, 'error');
+            setLoading(false, button);
+        }
+    });
+</script>
+{% endblock %}

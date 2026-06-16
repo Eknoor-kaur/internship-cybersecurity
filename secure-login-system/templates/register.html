@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Secure Login System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .password-requirements {
+        background: #f5f5f5;
+        border-left: 4px solid #e0e0e0;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+    
+    .requirement {
+        padding: 5px 0;
+        color: #666;
+    }
+    
+    .requirement.met {
+        color: #51cf66;
+    }
+    
+    .requirement.met::before {
+        content: '✓ ';
+        font-weight: bold;
+    }
+    
+    .requirement::before {
+        content: '✗ ';
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h1>📝 Register</h1>
+        <p class="subtitle">Create a new secure account</p>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required 
+                       placeholder="3-20 characters (letters, numbers, _, -)"
+                       minlength="3" maxlength="20">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="example@domain.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Create a strong password">
+                <div class="password-strength">
+                    <div class="password-strength-bar"></div>
+                </div>
+                
+                <div class="password-requirements" id="requirements">
+                    <div class="requirement" id="req-length">At least 8 characters</div>
+                    <div class="requirement" id="req-upper">Uppercase letter (A-Z)</div>
+                    <div class="requirement" id="req-lower">Lowercase letter (a-z)</div>
+                    <div class="requirement" id="req-digit">Number (0-9)</div>
+                    <div class="requirement" id="req-special">Special character (!@#$%^&*)</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password_confirm">Confirm Password</label>
+                <input type="password" id="password_confirm" name="password_confirm" required 
+                       placeholder="Confirm your password">
+            </div>
+            
+            <button type="submit" id="registerBtn">Create Account</button>
+            
+            <p class="link">
+                Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+            </p>
+        </form>
+    </div>
+</div>
+
+<script>
+    const passwordInput = document.getElementById('password');
+    const requirements = {
+        'req-length': /^.{8,}$/,
+        'req-upper': /[A-Z]/,
+        'req-lower': /[a-z]/,
+        'req-digit': /\d/,
+        'req-special': /[!@#$%^&*()_+\-=\[\]{};:'",.<>?\/\\|`~]/
+    };
+    
+    function updatePasswordStrength() {
+        const password = passwordInput.value;
+        const strengthBar = document.querySelector('.password-strength-bar');
+        let strength = 0;
+        let metRequirements = 0;
+        
+        for (const [id, regex] of Object.entries(requirements)) {
+            const element = document.getElementById(id);
+            if (regex.test(password)) {
+                element.classList.add('met');
+                metRequirements++;
+                strength += 20;
+            } else {
+                element.classList.remove('met');
+            }
+        }
+        
+        strengthBar.className = 'password-strength-bar';
+        if (metRequirements === Object.keys(requirements).length) {
+            strengthBar.classList.add('password-strength-strong');
+        } else if (metRequirements >= 3) {
+            strengthBar.classList.add('password-strength-fair');
+        } else if (metRequirements > 0) {
+            strengthBar.classList.add('password-strength-weak');
+        }
+    }
+    
+    passwordInput.addEventListener('input', updatePasswordStrength);
+    
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const password_confirm = document.getElementById('password_confirm').value;
+        const button = document.getElementById('registerBtn');
+        
+        button.dataset.originalText = button.textContent;
+        setLoading(true, button);
+        
+        try {
+            const response = await fetch('{{ url_for("register") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, email, password, password_confirm })
+            });
+            
+            await handleResponse(response);
+        } catch (error) {
+            showAlert('An error occurred: ' + error.message, 'error');
+            setLoading(false, button);
+        }
+    });
+</script>
+{% endblock %}
